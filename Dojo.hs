@@ -50,6 +50,12 @@ instance Eq Virtu where
   min v1 v2 | v1 > v2 = v2
             | otherwise = v1-}
 
+instance Show Virtu where
+  show (Umilta v) = show "umilta" ++ show v
+  show (Coraggio v) = show "coraggio" ++ show v
+  show (Gentilezza v) = show "gentilezza" ++ show v
+  show (Rispetto v) = show "rispetto" ++ show v
+
 
 
 generaNuovaConfigurazioneDojo :: ConfigurazioneDojo -> ConfigurazioneDojo
@@ -74,10 +80,11 @@ distanza ((x1,y1),_,_,_,_) ((x2,y2),_,_,_,_) = abs (x1-x2) + abs (y1-y2) -- non 
 
 --Lancia errore se la lista di senpai ha 0 elementi. Questo perché tale situazione sarebbe anomala e causerebbe una soluzione finale errata.
 trovaSenpaiPiuVicino :: Senpai -> [Senpai] -> Senpai
-trovaSenpaiPiuVicino senpai (s : senpais) | distanza senpai s == 0 = trovaSenpaiPiuVicino senpai senpais --escudere se stesso
-trovaSenpaiPiuVicino senpai [s] = s --ultima ricorsione; rimane solo il sempai più vicino
-trovaSenpaiPiuVicino senpai (s1 : s2 : senpais) | distanza senpai s1 < distanza senpai s2 = trovaSenpaiPiuVicino senpai (s1 : senpais) --mantengo il più vicino
-                                                | otherwise = trovaSenpaiPiuVicino senpai (s2 : senpais) --mantengo il più vicino
+trovaSenpaiPiuVicino senpaiTarget (s : senpais) | distanza senpaiTarget s == 0 = trovaSenpaiPiuVicino senpaiTarget senpais --escudere se stesso
+trovaSenpaiPiuVicino senpaiTarget [s] = s --ultima ricorsione; rimane solo il sempai più vicino
+trovaSenpaiPiuVicino senpaiTarget (s1 : s2 : senpais) | distanza senpaiTarget s1 < distanza senpaiTarget s2 = 
+                                                               trovaSenpaiPiuVicino senpaiTarget (s1 : senpais) --mantengo s1 perché più vicino
+                                                      | otherwise = trovaSenpaiPiuVicino senpaiTarget (s2 : senpais) --mantengo s2 perché più vicino
 
 
 
@@ -107,8 +114,8 @@ senpai2 :: Senpai
 senpai3 :: Senpai
 senpai4 :: Senpai
 senpai1 = ((2,4),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
-senpai2 = ((2,4),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
-senpai3 = ((2,4),Umilta 0,Umilta 0,Gentilezza 0,Umilta 0)
+senpai2 = ((3,4),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
+senpai3 = ((2,6),Umilta 0,Umilta 0,Gentilezza 0,Umilta 0)
 senpai4 = ((5,7),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
 
 oggetto1 :: Oggetto
