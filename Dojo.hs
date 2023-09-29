@@ -53,10 +53,10 @@ instance Ord Virtu where
 
 
 instance Show Oggetto where
-       show (Vaso c) = "umilta" ++ show c
-       show (Spada c) = "coraggio" ++ show c
-       show (Fazzoletto c) = "gentilezza" ++ show c
-       show (Scopa c) = "rispetto" ++ show c
+       show (Vaso c) = "Vaso" ++ show c
+       show (Spada c) = "Spada" ++ show c
+       show (Fazzoletto c) = "Fazzoletto" ++ show c
+       show (Scopa c) = "Scopa" ++ show c
 
 
 instance Show Virtu where
@@ -67,14 +67,14 @@ instance Show Virtu where
 
 
 
-eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo  -- da fare
+eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo  -- da fare (logica spostamenti con gli oggetti && raccolta oggetti)
 eseguiUnTurno ([], listaOggetti) = ([], listaOggetti)
 eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [senpaiSpostato],[])
        where
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
               senpaiSpostato = muoviSenpai senpaiDiTurno (getCoordinataFromSenpai senpaiMinorePiuVicino) listaSenpaiDopoScontro
-eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = ([],[])
+eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiSpostato], listaOggetti)
        where
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
@@ -83,7 +83,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = ([],[])
 
 
 
-sfidaSenpaiVicini :: Senpai -> [Senpai] -> [Senpai] -> [Senpai]
+sfidaSenpaiVicini :: Senpai -> [Senpai] -> [Senpai] -> [Senpai]  -- da fare (incrementa valore senpai dopo la vittoria)
 sfidaSenpaiVicini _ _ [s] = [s]  -- non c'è nessuno rimasto da sfidare
 sfidaSenpaiVicini _ [] effettivaListaSenpai = effettivaListaSenpai  -- fine iterazione
 sfidaSenpaiVicini senpai (s : listaSenpai) effettivaListaSenpai       | distanza cs1 cs2 == 1 && maggioreDi senpai s
