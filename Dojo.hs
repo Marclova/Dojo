@@ -87,7 +87,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScon
               cst = getCoordinataFromSenpai senpaiDiTurno
               csv = getCoordinataFromSenpai senpaiMinorePiuVicino
               cov = getCoordinataFromOggetto oggettoPiuVicino
-              senpaiSpostato | distanza cst csv < distanza cst cov  -- Il nuovo senpai di turno (posto alla fine della coda)
+              senpaiSpostato | senpaiDiTurno /= senpaiMinorePiuVicino && distanza cst csv < distanza cst cov  -- Controllo se conviene di più avvicinarsi ad un senpai più debole o ad un'oggetto (escludendo se stesso)
                                    = muoviSenpai senpaiDiTurno csv listaSenpaiDopoScontro
                              | otherwise = muoviSenpai senpaiDiTurno cov listaSenpaiDopoScontro
 
@@ -158,10 +158,12 @@ distanza (x1,y1) (x2,y2) = abs (x1-x2) + abs (y1-y2) -- non calcolo l'ipotenusa 
 
 
 trovaSenpaiMinorePiuVicino :: Senpai -> [Senpai] -> Senpai
-trovaSenpaiMinorePiuVicino senpaiTarget (s : listaSenpai) | senpaiTarget == s = trovaSenpaiMinorePiuVicino senpaiTarget listaSenpai --escudere se stesso
+trovaSenpaiMinorePiuVicino senpaiTarget (s : listaSenpai) | senpaiTarget == s = trovaSenpaiMinorePiuVicino senpaiTarget listaSenpai -- escudere se stesso (primo elemento)
+trovaSenpaiMinorePiuVicino senpaiTarget [] = senpaiTarget  -- non esiste nessun senpai che possa esser battuto
 trovaSenpaiMinorePiuVicino senpaiTarget [s]      | maggioreDi senpaiTarget s = s -- ultima ricorsione; rimane solo il sempai piu' vicino
                                                  | otherwise = senpaiTarget  -- non esiste nessun senpai che possa esser battuto
-trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai)       | maggioreDi senpaiTarget s1 && distanza cst cs1 < distanza cst cs2 =
+trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | senpaiTarget == s2 = trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai)  -- escudere se stesso (secondo elemento)
+trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | maggioreDi senpaiTarget s1 && distanza cst cs1 < distanza cst cs2 =
                                                                              trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) --mantengo s1 perché piu' vicino
                                                                       | otherwise = trovaSenpaiMinorePiuVicino senpaiTarget (s2 : listaSenpai) --mantengo s2 perché piu' vicino
        where
