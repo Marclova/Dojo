@@ -42,6 +42,7 @@ instance Eq Virtu where
        v1 /= v2 = not (v1 == v2)
 
 
+
 instance Ord Virtu where
        Umilta val1 < Umilta val2 = val1 < val2
        Coraggio val1 < Coraggio val2 = val1 < val2
@@ -72,6 +73,9 @@ instance Show Virtu where
 
 
 
+-- da fare (metodo per simulare l'intera partita)
+
+
 eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo  -- da fare (raccolta oggetti)
 eseguiUnTurno ([], listaOggetti) = ([], listaOggetti)
 eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [senpaiSpostato],[])
@@ -79,7 +83,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [se
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
               senpaiSpostato = muoviSenpai senpaiDiTurno (getCoordinataFromSenpai senpaiMinorePiuVicino) listaSenpaiDopoScontro
-eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiSpostato], listaOggetti)
+eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiSpostato], listaOggettiDopoRaccolta)
        where
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai  -- in listaSenpaiDopoScontro non c'è il senpaiDiturno
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
@@ -90,6 +94,8 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScon
               senpaiSpostato | senpaiDiTurno /= senpaiMinorePiuVicino && distanza cst csv < distanza cst cov  -- Controllo se conviene di più avvicinarsi ad un senpai più debole o ad un'oggetto (escludendo se stesso)
                                    = muoviSenpai senpaiDiTurno csv listaSenpaiDopoScontro
                              | otherwise = muoviSenpai senpaiDiTurno cov listaSenpaiDopoScontro
+              senpaiDopoAverRaccoltoOggetto = fst (raccoltaOggetto senpaiSpostato listaOggetti)
+              listaOggettiDopoRaccolta = snd (raccoltaOggetto senpaiSpostato listaOggetti)
 
 
 
@@ -123,6 +129,15 @@ muoviSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) (x2,y2) listaS
               y1 = snd (getCoordinataFromSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1))
               check c = dentroILimiti c && controllaSicurezzaCasella (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) listaSenpai c
               senpaiInPericolo = not (check (x1,y1))
+
+
+raccoltaOggetto :: Senpai -> [Oggetto] -> (Senpai,[Oggetto])  -- da fare
+raccoltaOggetto senpai [] = (senpai,[])  -- nessun oggetto da raccogliere oppure nessun oggetto raggiunto
+raccoltaOggetto senpai (oggetto : listaOggetti) | distanza cs co == 0 = (senpai,listaOggetti)  -- rimovzione dell'oggetto raggiunto
+                                                | otherwise = (senpai,oggetto : snd (raccoltaOggetto senpai listaOggetti)) -- oggetto non raggiunto. Quindi controllo il prossimo
+       where
+              cs = getCoordinataFromSenpai senpai
+              co = getCoordinataFromOggetto oggetto
 
 
 controllaSicurezzaCasella :: Senpai -> [Senpai] -> Coordinata -> Bool
@@ -164,8 +179,8 @@ trovaSenpaiMinorePiuVicino senpaiTarget [s]      | maggioreDi senpaiTarget s = s
                                                  | otherwise = senpaiTarget  -- non esiste nessun senpai che possa esser battuto
 trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | senpaiTarget == s2 = trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai)  -- escudere se stesso (secondo elemento)
 trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | maggioreDi senpaiTarget s1 && distanza cst cs1 < distanza cst cs2 =
-                                                                             trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) --mantengo s1 perché piu' vicino
-                                                                      | otherwise = trovaSenpaiMinorePiuVicino senpaiTarget (s2 : listaSenpai) --mantengo s2 perché piu' vicino
+                                                                      trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) --mantengo s1 perché piu' vicino
+                                                                | otherwise = trovaSenpaiMinorePiuVicino senpaiTarget (s2 : listaSenpai) --mantengo s2 perché piu' vicino
        where
               cst = getCoordinataFromSenpai senpaiTarget
               cs1 = getCoordinataFromSenpai s1
