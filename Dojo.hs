@@ -6,7 +6,12 @@ limiteScacchiera :: Coordinata
 limiteScacchiera = (10,10)
 
 dentroILimiti :: Coordinata -> Bool
-dentroILimiti coordinata = fst coordinata <= fst limiteScacchiera && snd coordinata <= snd limiteScacchiera
+dentroILimiti coordinata = x <= limiteX && y <= limiteY && x >= 1 && y >= 1
+       where
+              x = fst coordinata
+              y = snd coordinata
+              limiteX = fst limiteScacchiera
+              limiteY = snd limiteScacchiera
 
 type Coordinata = (Int,Int)
 
@@ -53,21 +58,21 @@ instance Ord Virtu where
 
 
 instance Show Oggetto where
-       show (Vaso c) = "Vaso" ++ show c
-       show (Spada c) = "Spada" ++ show c
-       show (Fazzoletto c) = "Fazzoletto" ++ show c
-       show (Scopa c) = "Scopa" ++ show c
+       show (Vaso c) = "Vaso " ++ show c
+       show (Spada c) = "Spada " ++ show c
+       show (Fazzoletto c) = "Fazzoletto " ++ show c
+       show (Scopa c) = "Scopa " ++ show c
 
 
 instance Show Virtu where
-       show (Umilta v) = "umilta" ++ show v
-       show (Coraggio v) = "coraggio" ++ show v
-       show (Gentilezza v) = "gentilezza" ++ show v
-       show (Rispetto v) = "rispetto" ++ show v
+       show (Umilta v) = "Umilta " ++ show v
+       show (Coraggio v) = "Coraggio " ++ show v
+       show (Gentilezza v) = "Gentilezza " ++ show v
+       show (Rispetto v) = "Rispetto " ++ show v
 
 
 
-eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo  -- da fare (logica spostamenti con gli oggetti && raccolta oggetti)
+eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo  -- da fare (raccolta oggetti)
 eseguiUnTurno ([], listaOggetti) = ([], listaOggetti)
 eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [senpaiSpostato],[])
        where
@@ -76,10 +81,15 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [se
               senpaiSpostato = muoviSenpai senpaiDiTurno (getCoordinataFromSenpai senpaiMinorePiuVicino) listaSenpaiDopoScontro
 eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiSpostato], listaOggetti)
        where
-              listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai
+              listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai  -- in listaSenpaiDopoScontro non c'è il senpaiDiturno
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
               oggettoPiuVicino = trovaOggettoPiuVicino senpaiDiTurno listaOggetti
-              senpaiSpostato = muoviSenpai senpaiDiTurno (getCoordinataFromSenpai senpaiMinorePiuVicino) listaSenpaiDopoScontro
+              cst = getCoordinataFromSenpai senpaiDiTurno
+              csv = getCoordinataFromSenpai senpaiMinorePiuVicino
+              cov = getCoordinataFromOggetto oggettoPiuVicino
+              senpaiSpostato | distanza cst csv < distanza cst cov  -- Il nuovo senpai di turno (posto alla fine della coda)
+                                   = muoviSenpai senpaiDiTurno csv listaSenpaiDopoScontro
+                             | otherwise = muoviSenpai senpaiDiTurno cov listaSenpaiDopoScontro
 
 
 
@@ -198,13 +208,17 @@ calcolaValoreSenpai (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1
 
 
 
-dojo1 :: ConfigurazioneDojo
-dojo1 = (
-       [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
+
+
+arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
+              ((5,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
+{-
+arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
               ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
-              ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)],
-       []
-       )
+              ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
+-}
+dojo1 :: ConfigurazioneDojo
+dojo1 = (arraySenapais,[])
 
 {- test
 dojo :: ConfigurazioneDojo
