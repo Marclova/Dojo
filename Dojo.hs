@@ -33,6 +33,16 @@ type ConfigurazioneDojo = ([Senpai],[Oggetto])
 
 
 
+instance Eq Oggetto where
+      Vaso val1 == Vaso val2              = val1 == val2
+      Spada val1 == Spada val2            = val1 == val2
+      Fazzoletto val1 == Fazzoletto val2  = val1 == val2
+      Scopa val1 == Scopa val2            = val1 == val2
+      _ == _                              = False
+
+      o1 /= o2 = not (o1 == o2)
+
+
 instance Eq Virtu where
        Umilta val1 == Umilta val2         = val1 == val2
        Coraggio val1 == Coraggio val2     = val1 == val2
@@ -40,7 +50,6 @@ instance Eq Virtu where
        Rispetto val1 == Rispetto val2     = val1 == val2
        _ == _                             = False
        v1 /= v2 = not (v1 == v2)
-
 
 
 instance Ord Virtu where
@@ -83,7 +92,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listaSenpaiDopoScontro ++ [se
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
               senpaiSpostato = muoviSenpai senpaiDiTurno (getCoordinataFromSenpai senpaiMinorePiuVicino) listaSenpaiDopoScontro
-eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiSpostato], listaOggettiDopoRaccolta)
+eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScontro ++ [senpaiDopoAverRaccoltoOggetto], listaOggettiDopoRaccolta)
        where
               listaSenpaiDopoScontro = sfidaSenpaiVicini senpaiDiTurno listaSenpai listaSenpai  -- in listaSenpaiDopoScontro non c'è il senpaiDiturno
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDiTurno listaSenpaiDopoScontro
@@ -99,7 +108,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listaSenpaiDopoScon
 
 
 
-sfidaSenpaiVicini :: Senpai -> [Senpai] -> [Senpai] -> [Senpai]  -- da fare (incrementa valore senpai dopo la vittoria)
+sfidaSenpaiVicini :: Senpai -> [Senpai] -> [Senpai] -> [Senpai]  -- da fare (incrementa valore senpai dopo la vittoria && rimuovi la ridondanza dell'input)
 sfidaSenpaiVicini _ _ [s] = [s]  -- non c'è nessuno rimasto da sfidare
 sfidaSenpaiVicini _ [] effettivaListaSenpai = effettivaListaSenpai  -- fine iterazione
 sfidaSenpaiVicini senpai (s : listaSenpai) effettivaListaSenpai       | distanza cs1 cs2 == 1 && maggioreDi senpai s
@@ -131,13 +140,23 @@ muoviSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) (x2,y2) listaS
               senpaiInPericolo = not (check (x1,y1))
 
 
-raccoltaOggetto :: Senpai -> [Oggetto] -> (Senpai,[Oggetto])  -- da fare
+raccoltaOggetto :: Senpai -> [Oggetto] -> (Senpai,[Oggetto])
 raccoltaOggetto senpai [] = (senpai,[])  -- nessun oggetto da raccogliere oppure nessun oggetto raggiunto
-raccoltaOggetto senpai (oggetto : listaOggetti) | distanza cs co == 0 = (senpai,listaOggetti)  -- rimovzione dell'oggetto raggiunto
-                                                | otherwise = (senpai,oggetto : snd (raccoltaOggetto senpai listaOggetti)) -- oggetto non raggiunto. Quindi controllo il prossimo
+raccoltaOggetto senpai listaOggetti | distanza cs co == 0 = (senpaiPotenziato, nuovaLista)
+                                    | otherwise = (senpai,listaOggetti)  -- non faccio nulla
        where
+              oggettoDaRaccogliere = trovaOggettoPiuVicino senpai listaOggetti
               cs = getCoordinataFromSenpai senpai
-              co = getCoordinataFromOggetto oggetto
+              co = getCoordinataFromOggetto oggettoDaRaccogliere
+              senpaiPotenziato = applicaBeneficioOggetto oggettoDaRaccogliere senpai
+              nuovaLista = rimuoviUnElementoDallaLista listaOggetti oggettoDaRaccogliere
+
+
+applicaBeneficioOggetto :: Oggetto -> Senpai -> Senpai
+applicaBeneficioOggetto (Vaso _) (c,Umilta n,coraggio,gentilezza,rispetto) = (c,Umilta (n+1),coraggio,gentilezza,rispetto)
+applicaBeneficioOggetto (Spada _) (c,umilta,Coraggio n,gentilezza,rispetto) = (c,umilta,Coraggio (n+1),gentilezza,rispetto)
+applicaBeneficioOggetto (Fazzoletto _) (c,umilta,coraggio,Gentilezza n,rispetto) = (c,umilta,coraggio,Gentilezza (n+1),rispetto)
+applicaBeneficioOggetto (Scopa _) (c,umilta,coraggio,gentilezza,Rispetto n) = (c,umilta,coraggio,gentilezza,Rispetto (n+1))
 
 
 controllaSicurezzaCasella :: Senpai -> [Senpai] -> Coordinata -> Bool
@@ -159,7 +178,6 @@ eseguiScontri (senpai : listaSenpai) actualSenpais      | distanza senpai senpai
               listaSenpaiFiltrato = rimuoviUnElementoDallaLista listaSenpai senpaiDasconfiggere  --rimozione dall'iterazione
               actualSenpaisFiltrato = rimuoviUnElementoDallaLista actualSenpais senpaiDasconfiggere  --effettiva rimozione dal gioco
 -}
-
 
 
 rimuoviUnElementoDallaLista :: Eq a => [a] -> a -> [a]
@@ -226,16 +244,18 @@ calcolaValoreSenpai (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1
 
 
 
-
+arraySenapais :: [Senpai]
 arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
               ((5,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
+arrayOggettos :: [Oggetto]
+arrayOggettos = [Vaso (1,1), Scopa (10,10)]
 {-
 arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
               ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
               ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
 -}
 dojo1 :: ConfigurazioneDojo
-dojo1 = (arraySenapais,[])
+dojo1 = (arraySenapais,arrayOggettos)
 
 {- test
 dojo :: ConfigurazioneDojo
