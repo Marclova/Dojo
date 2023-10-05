@@ -83,6 +83,17 @@ instance Show Virtu where
 
 
 -- da fare (metodo per simulare l'intera partita)
+stampaSimulazione :: [ConfigurazioneDojo] -> IO ()
+stampaSimulazione (dojo : listaDojo) = do
+                                          putStrLn (show dojo ++ "\n")
+                                          stampaSimulazione listaDojo
+stampaSimulazione [] = print ()
+
+
+calcolaSimulazione :: ConfigurazioneDojo -> [ConfigurazioneDojo]
+calcolaSimulazione ([s],listaOggetti) = [([s],listaOggetti)]
+calcolaSimulazione dojo = dojo : calcolaSimulazione (eseguiUnTurno dojo)
+
 
 
 eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo
@@ -257,7 +268,7 @@ calcolaValoreSenpai (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1
 
 
 
-
+{-
 arraySenapais :: [Senpai]
 arraySenapais = [    ((6,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
                      ((4,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1)
@@ -267,15 +278,18 @@ arraySenapais = [    ((6,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
                 ]
 arrayOggettos :: [Oggetto]
 arrayOggettos = [Vaso (1,1), Scopa (10,10)]
+-}
 {-
 arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
               ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
               ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
 -}
+{-
 dojo1 :: ConfigurazioneDojo
 dojo1 = (arraySenapais,arrayOggettos)
+-}
 
-{- test
+
 dojo :: ConfigurazioneDojo
 dojo = (
   [((2,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
@@ -285,6 +299,7 @@ dojo = (
   [Vaso (7,7),Vaso (1,1),Spada (5,1),Spada (9,9),Fazzoletto (4,3),Scopa (8,7),Scopa (6,1),Scopa (4,5)]
   )
 
+{-
 dojo1 = (
        [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
               ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
