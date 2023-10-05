@@ -108,8 +108,8 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSeco
                              | otherwise = muoviSenpai senpaiDopoPrimoScontro cov listasenpaiDopoPrimoScontro
               senpaiDopoAverRaccoltoOggetto = fst (raccoltaOggetto senpaiSpostato listaOggetti)
               listaOggettiDopoRaccolta = snd (raccoltaOggetto senpaiSpostato listaOggetti)
-              (senpaiDopoSecondoScontro,listasenpaiDopoSecondoScontro,_) | not unSenpaiSconfitto = sfidaSenpaiVicini (senpaiSpostato, listasenpaiDopoPrimoScontro)
-                                                                         | otherwise = (senpaiSpostato, listasenpaiDopoPrimoScontro,False)
+              (senpaiDopoSecondoScontro,listasenpaiDopoSecondoScontro,_) | not unSenpaiSconfitto = sfidaSenpaiVicini (senpaiDopoAverRaccoltoOggetto, listasenpaiDopoPrimoScontro)
+                                                                         | otherwise = (senpaiDopoAverRaccoltoOggetto, listasenpaiDopoPrimoScontro,False)
 
 
 muoviSenpai :: Senpai -> Coordinata -> [Senpai] -> Senpai
