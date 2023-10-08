@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+import Control.Concurrent.STM (check)
 {-# HLINT ignore "Use >=" #-}
 {-# HLINT ignore "Use >" #-}
 
@@ -82,7 +83,23 @@ instance Show Virtu where
 
 
 
--- da fare (metodo per simulare l'intera partita)
+checkConfigurazioneInizialeDojo :: ConfigurazioneDojo -> Bool
+checkConfigurazioneInizialeDojo (listaSenpai,listaOggetti) = checkListaSenpai listaSenpai && checkListaOggetti listaOggetti
+
+checkListaSenpai :: [Senpai] -> Bool
+checkListaSenpai [] = True
+checkListaSenpai ((coordinata,Umilta u1,Coraggio c1,Gentilezza g1,Rispetto r1) : lista) | checkSenpai = checkListaSenpai lista
+                                                                                        | otherwise = False
+       where
+              checkSenpai = dentroILimiti coordinata && u1 == 0 && c1 == 0 && g1 == 0 && r1 == 0
+
+checkListaOggetti :: [Oggetto] -> Bool
+checkListaOggetti [] = True
+checkListaOggetti (oggetto : lista) | dentroILimiti (getCoordinataFromOggetto oggetto) = checkListaOggetti lista
+                                    | otherwise = False
+
+
+
 stampaSimulazione :: [ConfigurazioneDojo] -> IO ()
 stampaSimulazione (dojo : listaDojo) = do
                                           putStrLn (show dojo ++ "\n")
