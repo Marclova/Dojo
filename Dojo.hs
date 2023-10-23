@@ -233,14 +233,15 @@ distanza (x1,y1) (x2,y2) = abs (x1-x2) + abs (y1-y2) -- non calcolo l'ipotenusa 
 
 
 trovaSenpaiMinorePiuVicino :: Senpai -> [Senpai] -> Senpai
-trovaSenpaiMinorePiuVicino senpaiTarget (s : listaSenpai) | senpaiTarget == s = trovaSenpaiMinorePiuVicino senpaiTarget listaSenpai -- escudere se stesso (primo elemento)
-trovaSenpaiMinorePiuVicino senpaiTarget [] = senpaiTarget  -- non esiste nessun senpai che possa esser battuto
-trovaSenpaiMinorePiuVicino senpaiTarget [s]      | maggioreDi senpaiTarget s = s -- ultima ricorsione; rimane solo il sempai piu' vicino
-                                                 | otherwise = senpaiTarget  -- non esiste nessun senpai che possa esser battuto
-trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | senpaiTarget == s2 = trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai)  -- escudere se stesso (secondo elemento)
-trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | maggioreDi senpaiTarget s1 && distanza cst cs1 < distanza cst cs2 =
-                                                                      trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) --mantengo s1 perché piu' vicino
-                                                                | otherwise = trovaSenpaiMinorePiuVicino senpaiTarget (s2 : listaSenpai) --mantengo s2 perché piu' vicino
+trovaSenpaiMinorePiuVicino senpaiTarget [] = senpaiTarget
+trovaSenpaiMinorePiuVicino senpaiTarget [s] | maggioreDi senpaiTarget s = s -- ultima iterazione
+                                            | otherwise = senpaiTarget
+trovaSenpaiMinorePiuVicino senpaiTarget (s : listaSenpai) | not (maggioreDi senpaiTarget s) = trovaSenpaiMinorePiuVicino senpaiTarget listaSenpai -- rimozione primo elemento
+trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | not (maggioreDi senpaiTarget s2) = trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) -- rimozione secondo elemento
+                                                                -- sia s1 che s2 sono minori di senpaiTarget
+                                                                | distanza cst cs1 < distanza cst cs2 =
+                                                                      trovaSenpaiMinorePiuVicino senpaiTarget (s1 : listaSenpai) -- mantengo s1 perché piu' vicino
+                                                                | otherwise = trovaSenpaiMinorePiuVicino senpaiTarget (s2 : listaSenpai) -- mantengo s2 perché piu' vicino
        where
               cst = getCoordinataFromSenpai senpaiTarget
               cs1 = getCoordinataFromSenpai s1
