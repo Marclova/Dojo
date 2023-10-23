@@ -143,21 +143,19 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSeco
 
 muoviSenpai :: Senpai -> Coordinata -> [Senpai] -> Senpai
 muoviSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) (x2,y2) listaSenpai
-       -- | x1 == x2 && y1 == y2 && not senpaiInPericolo = (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1)  -- il senpai non deve spostarsi
        | x1 < x2 && check (x1 + 1,y1) = ((x1 + 1,y1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento a destra
        | y1 < y2 && check (x1,y1 + 1) = ((x1,y1 + 1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento in alto
        | y1 > y2 && check (x1,y1 - 1) = ((x1,y1 - 1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento in basso
        | x1 > x2 && check (x1 - 1,y1) = ((x1 - 1,y1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento a sinistra
-              -- nessun movimento sicuro per avvicinarsi all'obbiettivo oppure nessun obbiettivo fissato, quindi controllo se il senpai è al sicuro
+              -- nessun movimento sicuro per avvicinarsi all'obbiettivo oppure nessun obbiettivo fissato, quindi controllo se il senpai è al sicuro...
        | not senpaiInPericolo = (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1)  -- Nessun movimento elusivo necessario
        | check (x1 + 1,y1) = ((x1 + 1,y1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento elusivo a destra
        | check (x1,y1 + 1) = ((x1,y1 + 1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento elusivo in alto
        | check (x1,y1 - 1) = ((x1,y1 - 1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento elusivo in basso
        | check (x1 - 1,y1) = ((x1 - 1,y1),umilta1,coraggio1,gentilezza1,rispetto1)  -- movimento elusivo a sinistra
-       | otherwise = (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1)  -- il senpai non ha via di scampo
+       | otherwise = (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1)  -- il senpai non ha via di scampo e verrà presto eliminato
        where
-              x1 = fst (getCoordinataFromSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1))
-              y1 = snd (getCoordinataFromSenpai (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1))
+              (x1,y1) = coordinata1
               check c = dentroILimiti c && not (casellaOccupata listaSenpai c)
                             && controllaSicurezzaCasella (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) listaSenpai c
               senpaiInPericolo = not (controllaSicurezzaCasella (coordinata1,umilta1,coraggio1,gentilezza1,rispetto1) listaSenpai (x1,y1))
@@ -168,7 +166,7 @@ sfidaSenpaiVicini (senpai,[]) = (senpai,[],False)  -- non c'è nessuno rimasto d
 sfidaSenpaiVicini (senpai,listaSenpai) | distanza cs1 cs2 == 1 = (senpaiDopoScontro,listaSenpaiDopoScontro,True)  -- sconfigge un senpai vicino e riceve i benefici
                                        | otherwise = (senpai,listaSenpai,False) -- non ci sono senpai da sfidare
        where
-              senpaiDaSconfiggere = trovaSenpaiMinorePiuVicino senpai listaSenpai
+              senpaiDaSconfiggere = trovaSenpaiMinorePiuVicino senpai listaSenpai  --senpaiDaSconfiggere == senpai se e solo se non vi sono senpai da sconfiggere
               cs1 = getCoordinataFromSenpai senpai
               cs2 = getCoordinataFromSenpai senpaiDaSconfiggere
               senpaiDopoScontro = applicaBeneficioScontro senpai senpaiDaSconfiggere
@@ -216,8 +214,7 @@ casellaOccupata (s : listaSenpai) c | distanza (getCoordinataFromSenpai s) c == 
 
 controllaSicurezzaCasella :: Senpai -> [Senpai] -> Coordinata -> Bool
 controllaSicurezzaCasella s1 [] (x1,y1) = True -- tutti gli avversari sono stati analizzati
-controllaSicurezzaCasella s1 (s2 : listaSenpai) (newX,newY) | s1 == s2 = controllaSicurezzaCasella s1 listaSenpai (newX,newY) -- esclude se stesso
-                                                            | abs (newX-x2) + abs (newY-y2) <= 1 && maggioreDi s2 s1 = False  -- minaccia rilevata nella coordinata indicata
+controllaSicurezzaCasella s1 (s2 : listaSenpai) (newX,newY) | abs (newX-x2) + abs (newY-y2) == 1 && maggioreDi s2 s1 = False  -- minaccia rilevata nella coordinata indicata
                                                             | otherwise = controllaSicurezzaCasella s1 listaSenpai (newX,newY)  -- esaminazione prossimo senpai avversario
        where
               x2 = fst (getCoordinataFromSenpai s2)
