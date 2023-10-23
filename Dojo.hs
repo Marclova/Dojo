@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-import Control.Concurrent.STM (check)
 {-# HLINT ignore "Use >=" #-}
 {-# HLINT ignore "Use >" #-}
 
@@ -84,6 +83,7 @@ instance Show Virtu where
 
 
 checkConfigurazioneInizialeDojo :: ConfigurazioneDojo -> Bool
+checkConfigurazioneInizialeDojo ([],_) = False
 checkConfigurazioneInizialeDojo (listaSenpai,listaOggetti) = checkListaSenpai listaSenpai && checkListaOggetti listaOggetti
 
 checkListaSenpai :: [Senpai] -> Bool
@@ -107,6 +107,8 @@ stampaSimulazione (dojo : listaDojo) = do
 stampaSimulazione [] = print ()
 
 
+
+
 calcolaSimulazione :: ConfigurazioneDojo -> [ConfigurazioneDojo]
 calcolaSimulazione ([s],listaOggetti) = [([s],listaOggetti)]
 calcolaSimulazione dojo = dojo : calcolaSimulazione (eseguiUnTurno dojo)
@@ -125,7 +127,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listasenpaiDopoSecondoScontro
 
 eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSecondoScontro ++ [senpaiDopoSecondoScontro], listaOggettiDopoRaccolta)
        where
-              (senpaiDopoPrimoScontro,listasenpaiDopoPrimoScontro,unSenpaiSconfitto) = sfidaSenpaiVicini (senpaiDiTurno,listaSenpai)  -- in listasenpaiDopoPrimoScontro non c'è il senpaiDiturno
+              (senpaiDopoPrimoScontro,listasenpaiDopoPrimoScontro,unSenpaiSconfitto) = sfidaSenpaiVicini (senpaiDiTurno,listaSenpai)
               senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDopoPrimoScontro listasenpaiDopoPrimoScontro
               oggettoPiuVicino = trovaOggettoPiuVicino senpaiDopoPrimoScontro listaOggetti
               cst = getCoordinataFromSenpai senpaiDopoPrimoScontro
@@ -134,8 +136,7 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSeco
               senpaiSpostato | senpaiDopoPrimoScontro /= senpaiMinorePiuVicino && distanza cst csv < distanza cst cov  -- Controllo se conviene di più avvicinarsi ad un senpai più debole o ad un'oggetto (escludendo se stesso)
                                    = muoviSenpai senpaiDopoPrimoScontro csv listasenpaiDopoPrimoScontro
                              | otherwise = muoviSenpai senpaiDopoPrimoScontro cov listasenpaiDopoPrimoScontro
-              senpaiDopoAverRaccoltoOggetto = fst (raccoltaOggetto senpaiSpostato listaOggetti)
-              listaOggettiDopoRaccolta = snd (raccoltaOggetto senpaiSpostato listaOggetti)
+              (senpaiDopoAverRaccoltoOggetto,listaOggettiDopoRaccolta) = raccoltaOggetto senpaiSpostato listaOggetti
               (senpaiDopoSecondoScontro,listasenpaiDopoSecondoScontro,_) | not unSenpaiSconfitto = sfidaSenpaiVicini (senpaiDopoAverRaccoltoOggetto, listasenpaiDopoPrimoScontro)
                                                                          | otherwise = (senpaiDopoAverRaccoltoOggetto, listasenpaiDopoPrimoScontro,False)
 
@@ -215,8 +216,9 @@ casellaOccupata (s : listaSenpai) c | distanza (getCoordinataFromSenpai s) c == 
 
 controllaSicurezzaCasella :: Senpai -> [Senpai] -> Coordinata -> Bool
 controllaSicurezzaCasella s1 [] (x1,y1) = True -- tutti gli avversari sono stati analizzati
-controllaSicurezzaCasella s1 (s2 : listaSenpai) (x1,y1) | abs (x1-x2) + abs (y1-y2) <= 1 && maggioreDi s2 s1 = False  -- minaccia rilevata nella coordinata indicata
-                                                        | otherwise = controllaSicurezzaCasella s1 listaSenpai (x1,x2)  -- esaminazione prossimo senpai avversario
+controllaSicurezzaCasella s1 (s2 : listaSenpai) (newX,newY) | s1 == s2 = controllaSicurezzaCasella s1 listaSenpai (newX,newY) -- esclude se stesso
+                                                            | abs (newX-x2) + abs (newY-y2) <= 1 && maggioreDi s2 s1 = False  -- minaccia rilevata nella coordinata indicata
+                                                            | otherwise = controllaSicurezzaCasella s1 listaSenpai (newX,newY)  -- esaminazione prossimo senpai avversario
        where
               x2 = fst (getCoordinataFromSenpai s2)
               y2 = snd (getCoordinataFromSenpai s2)
@@ -285,62 +287,39 @@ calcolaValoreSenpai (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1
 
 
 
-
-{-
-arraySenapais :: [Senpai]
-arraySenapais = [    ((6,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
-                     ((4,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1)
-                     --((5,5),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
-                     --((5,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
-                     --((5,6),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)
-                ]
+dojo1 :: ConfigurazioneDojo
+dojoTest :: ConfigurazioneDojo
 arrayOggettos :: [Oggetto]
 arrayOggettos = [Vaso (1,1), Scopa (10,10)]
+{-   --scontri
+arraySenapais :: [Senpai]
+arraySenapais = [    ((6,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
+                     ((4,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
+                     ((5,5),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
+                     ((5,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
+                     ((5,6),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)
+                ]
 -}
-{-
+{-   ---scelta obbiettivo
+arraySenapais = [    ((1,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
+                     ((1,10),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)
+
+                ]
+-}
+--{-   --preservazione
 arraySenapais = [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
-              ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
+              ((3,5),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
               ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)]
--}
-{-
-dojo1 :: ConfigurazioneDojo
-dojo1 = (arraySenapais,arrayOggettos)
--}
+---}
+dojoTest = (arraySenapais,arrayOggettos)
 
 
-dojo :: ConfigurazioneDojo
-dojo = (
+
+
+dojo1 = (
   [((2,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
        ((3,8),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
        ((4,1),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0),
        ((9,6),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)],
   [Vaso (7,7),Vaso (1,1),Spada (5,1),Spada (9,9),Fazzoletto (4,3),Scopa (8,7),Scopa (6,1),Scopa (4,5)]
   )
-
-{-
-dojo1 = (
-       [((2,4),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
-              ((3,4),Umilta 2,Coraggio 2,Gentilezza 2,Rispetto 2),
-              ((4,4),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)],
-       []
-       )
-
-
-senpai1 :: Senpai
-senpai2 :: Senpai
-senpai3 :: Senpai
-senpai4 :: Senpai
-senpai1 = ((2,4),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
-senpai2 = ((3,4),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
-senpai3 = ((2,6),Umilta 0,Umilta 0,Gentilezza 0,Umilta 0)
-senpai4 = ((5,7),Umilta 0,Umilta 0,Umilta 0,Umilta 0)
-
-oggetto1 :: Oggetto
-oggetto2 :: Oggetto
-oggetto3 :: Oggetto
-oggetto4 :: Oggetto
-oggetto1 = Vaso (1,2)
-oggetto2 = Vaso (1,2)
-oggetto3 = Scopa (1,2)
-oggetto4 = Vaso (3,5)
--}
