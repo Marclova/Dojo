@@ -269,13 +269,13 @@ getCoordinataFromOggetto (Scopa c) = c
 
 maggioreDi :: Senpai -> Senpai -> Bool
 maggioreDi ((x1,y1),umilta1,coraggio1,gentilezza1,rispetto1) ((x2,y2),umilta2,coraggio2,gentilezza2,rispetto2)
-              | calcolaValoreSenpai umilta1 coraggio1 gentilezza1 rispetto1 /= calcolaValoreSenpai umilta2 coraggio2 gentilezza2 rispetto2 =
-                            calcolaValoreSenpai umilta1 coraggio1 gentilezza1 rispetto1 > calcolaValoreSenpai umilta2 coraggio2 gentilezza2 rispetto2
+              | sommaValoriVirtu umilta1 coraggio1 gentilezza1 rispetto1 /= sommaValoriVirtu umilta2 coraggio2 gentilezza2 rispetto2 =
+                            sommaValoriVirtu umilta1 coraggio1 gentilezza1 rispetto1 > sommaValoriVirtu umilta2 coraggio2 gentilezza2 rispetto2
               |otherwise = (div ((x1+y1)*(x1+y1-1)) 2 +x1-y1) > (div ((x2+y2)*(x2+y2-1)) 2 +x2-y2)
 
 
-calcolaValoreSenpai :: Virtu -> Virtu -> Virtu -> Virtu -> Int
-calcolaValoreSenpai (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1 + v2 + v3 + v4
+sommaValoriVirtu :: Virtu -> Virtu -> Virtu -> Virtu -> Int
+sommaValoriVirtu (Umilta v1) (Coraggio v2) (Gentilezza v3) (Rispetto v4) = v1 + v2 + v3 + v4
 
 
 
