@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use isNothing" #-}
 {-# HLINT ignore "Use >=" #-}
 {-# HLINT ignore "Use >" #-}
+import Data.Maybe (fromJust)
 
 limiteScacchiera :: Coordinata
 limiteScacchiera = (10,10)
@@ -117,14 +119,6 @@ calcolaSimulazione dojo = dojo : calcolaSimulazione (eseguiUnTurno dojo)
 
 eseguiUnTurno :: ConfigurazioneDojo -> ConfigurazioneDojo
 eseguiUnTurno ([], listaOggetti) = ([], listaOggetti)
-eseguiUnTurno (senpaiDiTurno : listaSenpai, []) = (listasenpaiDopoSecondoScontro ++ [senpaiDopoSecondoScontro],[])
-       where
-              (senpaiDopoPrimoScontro,listasenpaiDopoPrimoScontro,unSenpaiSconfitto) = sfidaSenpaiVicini (senpaiDiTurno,listaSenpai)
-              senpaiMinorePiuVicino = trovaSenpaiMinorePiuVicino senpaiDopoPrimoScontro listasenpaiDopoPrimoScontro
-              senpaiSpostato = muoviSenpai senpaiDopoPrimoScontro (getCoordinataFromSenpai senpaiMinorePiuVicino) listasenpaiDopoPrimoScontro
-              (senpaiDopoSecondoScontro,listasenpaiDopoSecondoScontro,_) | not unSenpaiSconfitto = sfidaSenpaiVicini (senpaiSpostato, listasenpaiDopoPrimoScontro)
-                                                                         | otherwise = (senpaiSpostato, listasenpaiDopoPrimoScontro,False)
-
 eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSecondoScontro ++ [senpaiDopoSecondoScontro], listaOggettiDopoRaccolta)
        where
               (senpaiDopoPrimoScontro,listasenpaiDopoPrimoScontro,unSenpaiSconfitto) = sfidaSenpaiVicini (senpaiDiTurno,listaSenpai)
@@ -132,7 +126,8 @@ eseguiUnTurno (senpaiDiTurno : listaSenpai, listaOggetti) = (listasenpaiDopoSeco
               oggettoPiuVicino = trovaOggettoPiuVicino senpaiDopoPrimoScontro listaOggetti
               cst = getCoordinataFromSenpai senpaiDopoPrimoScontro
               csv = getCoordinataFromSenpai senpaiMinorePiuVicino
-              cov = getCoordinataFromOggetto oggettoPiuVicino
+              cov | oggettoPiuVicino == Nothing = (-1,-1)  -- -1 coincide con coordinata inesistente
+                  | otherwise = getCoordinataFromOggetto (fromJust oggettoPiuVicino)
               senpaiSpostato | senpaiDopoPrimoScontro /= senpaiMinorePiuVicino && distanza cst csv < distanza cst cov  -- Controllo se conviene di più avvicinarsi ad un senpai più debole o ad un'oggetto (escludendo se stesso)
                                    = muoviSenpai senpaiDopoPrimoScontro csv listasenpaiDopoPrimoScontro
                              | otherwise = muoviSenpai senpaiDopoPrimoScontro cov listasenpaiDopoPrimoScontro
@@ -178,7 +173,7 @@ raccoltaOggetto senpai [] = (senpai,[])  -- nessun oggetto da raccogliere oppure
 raccoltaOggetto senpai listaOggetti | distanza cs co == 0 = (senpaiPotenziato, nuovaLista)
                                     | otherwise = (senpai,listaOggetti)  -- non faccio nulla
        where
-              oggettoDaRaccogliere = trovaOggettoPiuVicino senpai listaOggetti
+              Just oggettoDaRaccogliere = trovaOggettoPiuVicino senpai listaOggetti  -- rimuovo subito il Just senza controllare che non sia Nothing
               cs = getCoordinataFromSenpai senpai
               co = getCoordinataFromOggetto oggettoDaRaccogliere
               senpaiPotenziato = applicaBeneficioOggetto oggettoDaRaccogliere senpai
@@ -227,10 +222,6 @@ rimuoviUnElementoDallaLista (y : ys) x | x == y     = ys       -- trovo la ricor
                                        | otherwise  = y : rimuoviUnElementoDallaLista ys x
 
 
-distanza :: Coordinata -> Coordinata -> Int
-distanza (x1,y1) (x2,y2) = abs (x1-x2) + abs (y1-y2) -- non calcolo l'ipotenusa nella distanza perché non esistono movimenti diagonali
-
-
 trovaSenpaiMinorePiuVicino :: Senpai -> [Senpai] -> Senpai
 trovaSenpaiMinorePiuVicino senpaiTarget [] = senpaiTarget
 trovaSenpaiMinorePiuVicino senpaiTarget [s] | maggioreDi senpaiTarget s = s -- ultima iterazione
@@ -247,8 +238,9 @@ trovaSenpaiMinorePiuVicino senpaiTarget (s1 : s2 : listaSenpai) | not (maggioreD
               cs2 = getCoordinataFromSenpai s2
 
 
-trovaOggettoPiuVicino :: Senpai -> [Oggetto] -> Oggetto
-trovaOggettoPiuVicino senpai [o] = o
+trovaOggettoPiuVicino :: Senpai -> [Oggetto] -> Maybe Oggetto
+trovaOggettoPiuVicino _ [] = Nothing
+trovaOggettoPiuVicino senpai [o] = Just o
 trovaOggettoPiuVicino senpai (oggetto1 : oggetto2 : listaOggetti)     | distanza cs co1 < distanza cs co2
                                                                              = trovaOggettoPiuVicino senpai (oggetto1 : listaOggetti)
                                                                       | otherwise = trovaOggettoPiuVicino senpai (oggetto2 : listaOggetti)
@@ -256,6 +248,11 @@ trovaOggettoPiuVicino senpai (oggetto1 : oggetto2 : listaOggetti)     | distanza
               cs = getCoordinataFromSenpai senpai
               co1 = getCoordinataFromOggetto oggetto1
               co2 = getCoordinataFromOggetto oggetto2
+
+
+distanza :: Coordinata -> Coordinata -> Int
+distanza (x1,y1) (x2,y2) | x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0 = maxBound :: Int  -- in caso di coordinate anomale, la distanza è massima
+                         | otherwise = abs (x1-x2) + abs (y1-y2) -- non calcolo l'ipotenusa nella distanza perché non esistono movimenti diagonali
 
 
 
@@ -300,7 +297,6 @@ arraySenapais = [    ((6,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
 {-   ---scelta obbiettivo
 arraySenapais = [    ((1,5),Umilta 1,Coraggio 1,Gentilezza 1,Rispetto 1),
                      ((1,10),Umilta 0,Coraggio 0,Gentilezza 0,Rispetto 0)
-
                 ]
 -}
 --{-   --preservazione
